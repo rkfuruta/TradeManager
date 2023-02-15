@@ -10,7 +10,7 @@ const verifyToken = (req, res, next) => {
         return res.status(403).json({ success: false, message: "A token is required for authentication"});
     }
     try {
-        req.user = jwt.verify(token[1], process.env.TOKEN_KEY);
+        req.token_data = jwt.verify(token[1], process.env.TOKEN_KEY);
     } catch (err) {
         return res.status(401).json({ success: false, message: "Invalid Token"});
     }

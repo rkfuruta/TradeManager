@@ -26,12 +26,12 @@ async function login(req, res) {
             res.status(400).json({ success: false, message: "All input is required"});
         }
 
-        const model = await user.findOne({ where: { email:email } });
+        const model = await user.findOne({ where: { email: email } });
 
         if (model && (await bcrypt.compare(password, model.password))) {
-            // Create token
+
             const token = jwt.sign(
-                { user_id: model.id, email },
+                { user_id: model.entity_id, email: email },
                 process.env.TOKEN_KEY,
                 {
                     expiresIn: "2h",
@@ -48,15 +48,38 @@ async function login(req, res) {
                 token: model.token,
                 created_at: model.created_at,
             });
+        } else {
+            res.status(401).json({ success: false, message: "Invalid Credentials"});
         }
-        res.status(401).json({ success: false, message: "Invalid Credentials"});
     } catch (err) {
         console.log(err);
+    }
+}
+
+async function empireKey(req, res) {
+    const tokenData = req.token_data;
+    const userId = tokenData.user_id;
+    const key = req.body.key;
+
+    if (key !== undefined) {
+        const result = await user.update({
+            empire_api_key: key
+        }, {
+            where: { entity_id: userId }
+        });
+        if (result) {
+            res.status(200).json({ success: true });
+        } else {
+            res.status(500).json({ success: false });
+        }
+    } else {
+        res.status(400).json({ success: false, message: "Please provide your empire key" });
     }
 }
 
 module.exports = {
     findAll,
     create,
-    login
+    login,
+    empireKey
 };
