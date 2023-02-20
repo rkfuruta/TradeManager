@@ -37,6 +37,10 @@ const InventoryItem = db.define("inventory_item", {
         type: Sequelize.DATE,
         allowNull: true
     },
+    empire_created_at: {
+        type: Sequelize.DATE,
+        allowNull: true
+    },
     wear: {
         type: Sequelize.FLOAT,
         allowNull: true

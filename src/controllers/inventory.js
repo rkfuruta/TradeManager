@@ -64,6 +64,14 @@ async function updateInventory(inventory) {
     const items = await saveItems(result.data.data, inventory);
     inventory.changed('updatedAt', true);
     inventory.save();
+    items.sort((a, b) => {
+        if (a.empire_created_at > b.empire_created_at) {
+            return -1;
+        } else if (a.empire_created_at < b.empire_created_at) {
+            return 1;
+        }
+        return 0;
+    })
     inventory.dataValues.items = items;
     return inventory;
 }
@@ -92,7 +100,8 @@ async function upsertItem(item, inventory) {
         icon_url: item.icon_url,
         tradable: item.tradable,
         wear: item.wear,
-        market_value: item.market_value
+        market_value: item.market_value,
+        empire_created_at: moment.utc(item.created_at, "YYYY-MM-DD HH:mm:ss").toISOString()
     }
     if (item.tradelock) {
         intItemData.tradelock = item.tradelock.timestamp;
