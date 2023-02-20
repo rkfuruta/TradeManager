@@ -25,6 +25,10 @@ const InventoryItem = db.define("inventory_item", {
         type: Sequelize.STRING,
         allowNull: false
     },
+    icon_url: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
     tradable: {
         type: Sequelize.BOOLEAN,
         allowNull: false

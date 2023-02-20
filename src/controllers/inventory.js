@@ -89,6 +89,7 @@ async function upsertItem(item, inventory) {
         asset_id: item.asset_id,
         empire_id: item.id,
         market_name: item.market_name,
+        icon_url: item.icon_url,
         tradable: item.tradable,
         wear: item.wear,
         market_value: item.market_value
