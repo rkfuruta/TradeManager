@@ -41,7 +41,13 @@ async function createOrGetInventory(userId) {
 }
 
 async function getItemsData(inventory) {
-
+    let result = await InventoryItem.findAll( { where: { inventory_id: inventory.entity_id }});
+    let items = [];
+    _.each(result, (item) => {
+        items.push(item.dataValues);
+    })
+    inventory.dataValues.items = items;
+    return inventory;
 }
 
 async function updateInventory(inventory) {
