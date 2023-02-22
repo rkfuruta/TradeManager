@@ -34,7 +34,7 @@ async function login(req, res) {
                 { user_id: model.entity_id, email: email },
                 process.env.TOKEN_KEY,
                 {
-                    expiresIn: "2h",
+                    expiresIn: "24h",
                 }
             );
 
