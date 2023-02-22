@@ -23,9 +23,9 @@ async function get(req, res) {
                 await getItemsData(inventory);
             }
         }
+        checkItems(inventory);
         return res.status(200).json({ success: true, data: {inventory}});
     } catch (err) {
-        console.log(err);
         return res.status(400).json({ success: false, message: err.message});
     }
 }
@@ -64,7 +64,14 @@ async function updateInventory(inventory) {
     const items = await saveItems(result.data.data, inventory);
     inventory.changed('updatedAt', true);
     inventory.save();
-    items.sort((a, b) => {
+    inventory.dataValues.items = sortItems(items);
+    return inventory;
+}
+
+function sortItems(items) {
+    itemsPurchase = _.filter(items, item => item.purchase_value);
+    others = _.filter(items, item => !item.purchase_value);
+    itemsPurchase.sort((a, b) => {
         if (a.empire_created_at > b.empire_created_at) {
             return -1;
         } else if (a.empire_created_at < b.empire_created_at) {
@@ -72,8 +79,15 @@ async function updateInventory(inventory) {
         }
         return 0;
     })
-    inventory.dataValues.items = items;
-    return inventory;
+    others.sort((a, b) => {
+        if (a.empire_created_at > b.empire_created_at) {
+            return -1;
+        } else if (a.empire_created_at < b.empire_created_at) {
+            return 1;
+        }
+        return 0;
+    })
+    return itemsPurchase.concat(others);
 }
 
 async function saveItems(data, inventory) {
@@ -104,7 +118,7 @@ async function upsertItem(item, inventory) {
         empire_created_at: moment.utc(item.created_at, "YYYY-MM-DD HH:mm:ss").toISOString()
     }
     if (item.tradelock) {
-        intItemData.tradelock = item.tradelock.timestamp;
+        intItemData.tradelock = moment.unix(item.tradelock.timestamp).toISOString();
     }
     if (!InvItem) {
         InvItem = await InventoryItem.create(intItemData);
@@ -114,6 +128,48 @@ async function upsertItem(item, inventory) {
                 entity_id: InvItem.entity_id
             }
         });
+    }
+}
+
+async function checkItems(inventory) {
+    _.each(inventory.dataValues.items, (item) => {
+        setPurchaseData(item, inventory.user_id)
+    });
+}
+
+async function setPurchaseData(item, user_id) {
+    if (item.withdraw_id || !item.withdraw_check) {
+        return item;
+    }
+    const user = await User.findOne({ where: { entity_id: user_id}});
+    if (!user.empire_api_key) {
+        throw new Error("Please inform your empire api key");
+    }
+    let result = await empire.getWithdrawals(user.empire_api_key);
+    let found = false;
+    await _.each(result.data.data.withdrawals, async (withdraw) => {
+        if (item.market_name === withdraw.item.market_name) {
+            let response = await InventoryItem.findOne({ where: { withdraw_id: withdraw.id } });
+            if (!response) {
+                found = true;
+                InventoryItem.update(
+                    {
+                        withdraw_id: withdraw.id,
+                        purchase_value: withdraw.total_value,
+                        purchase_date: moment.unix(withdraw.metadata.auction_ends_at).toISOString(),
+                        withdraw_check: false
+                    },
+                    {
+                        where: {
+                            entity_id: item.entity_id
+                        }
+                    }
+                );
+            }
+        }
+    });
+    if (!found) {
+        InventoryItem.update({ withdraw_check: false }, { where: { entity_id: item.entity_id } });
     }
 }
 

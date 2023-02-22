@@ -48,6 +48,35 @@ const InventoryItem = db.define("inventory_item", {
     market_value: {
         type: Sequelize.FLOAT,
         allowNull: true
+    },
+    status: {
+        type: Sequelize.INTEGER.UNSIGNED,
+        allowNull: false,
+        defaultValue: 0
+    },
+    purchase_value: {
+        type: Sequelize.INTEGER,
+        allowNull: true
+    },
+    purchase_date: {
+        type: Sequelize.DATE,
+        allowNull: true
+    },
+    sell_value: {
+        type: Sequelize.INTEGER,
+        allowNull: true
+    },
+    sell_date: {
+        type: Sequelize.DATE,
+        allowNull: true
+    },
+    withdraw_id: {
+        type: Sequelize.INTEGER.UNSIGNED,
+        allowNull: true
+    },
+    withdraw_check: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
     }
 }, {
     charset: 'utf8',

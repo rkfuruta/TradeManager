@@ -6,6 +6,21 @@ async function getInventory(apiKey) {
     return axios.get(`${endpoint}trading/user/inventory`, { headers: {"Authorization" : `Bearer ${apiKey}`} });
 }
 
+async function getTransaction(page, apiKey) {
+    return axios.get(`${endpoint}user/transactions?page=${page}`, { headers: {"Authorization" : `Bearer ${apiKey}`} });
+}
+
+async function getWithdrawals(apiKey) {
+    return axios.get(`${endpoint}trading/user/withdrawals/history`, { headers: {"Authorization" : `Bearer ${apiKey}`} });
+}
+
+async function getDeposits(apiKey) {
+    return axios.get(`${endpoint}trading/user/deposits/history`, { headers: {"Authorization" : `Bearer ${apiKey}`} });
+}
+
 module.exports = {
-    getInventory
+    getInventory,
+    getTransaction,
+    getWithdrawals,
+    getDeposits
 }
