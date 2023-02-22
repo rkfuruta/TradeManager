@@ -4,6 +4,7 @@ const moment = require("moment");
 const empire = require("../api/empire.js");
 const _ = require("underscore");
 const InventoryItem = require("../models/inventory_item.js");
+const { Op } = require("sequelize");
 
 async function get(req, res) {
     const tokenData = req.token_data;
@@ -92,11 +93,24 @@ function sortItems(items) {
 
 async function saveItems(data, inventory) {
     let upsert = [];
+    let assetIds = [];
     _.each(data, (item) => {
+        assetIds.push(item.asset_id);
         upsert.push(upsertItem(item, inventory));
     });
-    await Promise.all(upsert);
-    let result = await InventoryItem.findAll( { where: { inventory_id: inventory.entity_id }});
+    let response = await InventoryItem.findAll(
+        {
+            where: {
+                inventory_id: inventory.entity_id,
+                asset_id: {
+                    [Op.notIn]:assetIds
+                }
+            }
+        });
+    let sold = [];
+    _.each(response, item => sold.push(itemSold(item, inventory.user_id)));
+    await Promise.all(sold);
+    let result = await InventoryItem.findAll( { where: { inventory_id: inventory.entity_id, sell_date: null }});
     let items = [];
     _.each(result, (item) => {
         items.push(item.dataValues);
@@ -148,7 +162,7 @@ async function setPurchaseData(item, user_id) {
     let result = await empire.getWithdrawals(user.empire_api_key);
     let found = false;
     await _.each(result.data.data.withdrawals, async (withdraw) => {
-        if (item.market_name === withdraw.item.market_name) {
+        if (item.market_name === withdraw.item.market_name && withdraw.status === 6) {
             let response = await InventoryItem.findOne({ where: { withdraw_id: withdraw.id } });
             if (!response) {
                 found = true;
@@ -170,6 +184,34 @@ async function setPurchaseData(item, user_id) {
     });
     if (!found) {
         InventoryItem.update({ withdraw_check: false }, { where: { entity_id: item.entity_id } });
+    }
+}
+
+async function itemSold(item, user_id) {
+    const user = await User.findOne({ where: { entity_id: user_id }});
+    if (!user.empire_api_key) {
+        throw new Error("Please inform your empire api key");
+    }
+    let result = await empire.getDeposits(user.empire_api_key);
+    if (result.data.success) {
+        let update = []
+        _.each(result.data.data.deposits, async (deposit) => {
+            if (item.asset_id === deposit.item.asset_id && deposit.status === 6) {
+                update.push(InventoryItem.update(
+                    {
+                        sell_value: deposit.total_value,
+                        sell_date:moment.unix(deposit.metadata.auction_ends_at).toISOString(),
+                    },
+                    {
+                        where:
+                            {
+                                entity_id: item.entity_id
+                            }
+                    }
+                ));
+            }
+        });
+        await Promise.all(update);
     }
 }
 
