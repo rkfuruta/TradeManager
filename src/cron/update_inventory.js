@@ -1,5 +1,9 @@
-const Inventory = './controllers/inventory.js'
+const Inventory = require('../controllers/inventory.js');
+const Config = require("../models/config.js");
+const _ = require("underscore");
 
-
-
-let inventory = await Inventory.inventoryUpdateCheck(userId);
+Config.findAll({ where: { code: "automatic_inventory_update", value: "true" } }).then((result) => {
+    _.each(result, (config) => {
+        Inventory.inventoryUpdateCheck(config.user_id);
+    });
+});
