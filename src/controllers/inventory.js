@@ -5,6 +5,8 @@ const empire = require("../api/empire.js");
 const _ = require("underscore");
 const InventoryItem = require("../models/inventory_item.js");
 const { Op } = require("sequelize");
+const {getTransaction} = require("../api/empire");
+const {transactions} = require("./dashboard");
 
 async function get(req, res) {
     const tokenData = req.token_data;
@@ -29,6 +31,12 @@ async function get(req, res) {
     } catch (err) {
         return res.status(400).json({ success: false, message: err.message});
     }
+}
+
+async function inventoryUpdateCheck(userId) {
+    let inventory = await createOrGetInventory(userId);
+    inventory = await updateInventory(inventory);
+    checkItems(inventory);
 }
 
 async function createOrGetInventory(userId) {
@@ -197,10 +205,12 @@ async function itemSold(item, user_id) {
         let update = []
         _.each(result.data.data.deposits, async (deposit) => {
             if (item.asset_id === deposit.item.asset_id && deposit.status === 6) {
+                let transaction = await getTransactionByItemId(item.empire_id, user.empire_api_key);
+                let sell_date = Math.floor(transaction.timestamp_raw/1000) || moment.utc().unix();
                 update.push(InventoryItem.update(
                     {
                         sell_value: deposit.total_value,
-                        sell_date:moment.unix(deposit.metadata.auction_ends_at).toISOString(),
+                        sell_date:moment.unix(sell_date).toISOString(),
                     },
                     {
                         where:
@@ -215,6 +225,26 @@ async function itemSold(item, user_id) {
     }
 }
 
+async function getTransactionByItemId(empire_id, token) {
+    let page = 1;
+    let total_pages = 1;
+    let transactionData = null;
+    while(page <= total_pages) {
+        let result = await empire.getTransaction(page, token);
+        total_pages = result.data.last_page;
+        _.each(result.data.data, (transaction) => {
+            if (transaction.data.status === 300 && transaction.data.metadata.item_id === empire_id) {
+                transactionData = transaction;
+            }
+        });
+        if (transactionData) {
+            total_pages = 0;
+        }
+    }
+    return transactionData;
+}
+
 module.exports = {
-    get
+    get,
+    inventoryUpdateCheck
 }
