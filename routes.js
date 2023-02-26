@@ -7,9 +7,7 @@ const Dashboard = require("./src/controllers/dashboard.js");
 const auth = require("./src/middleware/auth.js");
 
 // USERS ENDPOINT
-// routes.get("/v1/users", auth, User.findAll);
-routes.get("/v1/users", User.findAll);
-routes.post("/v1/users",  User.create);
+// routes.post("/v1/users",  User.create);
 routes.post("/v1/users/login",  User.login);
 routes.post("/v1/users/empire/key", auth, User.empireKey);
 
