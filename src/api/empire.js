@@ -18,9 +18,14 @@ async function getDeposits(apiKey) {
     return axios.get(`${endpoint}trading/user/deposits/history`, { headers: {"Authorization" : `Bearer ${apiKey}`} });
 }
 
+async function depositItem(itemId, price, apiKey) {
+    return axios.post(`${endpoint}trading/deposit`, {items: [{id: itemId, coin_value: price}]},  { headers: {"Authorization" : `Bearer ${apiKey}`} });
+}
+
 module.exports = {
     getInventory,
     getTransaction,
     getWithdrawals,
-    getDeposits
+    getDeposits,
+    depositItem
 }

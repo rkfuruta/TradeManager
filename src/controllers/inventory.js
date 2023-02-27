@@ -7,6 +7,7 @@ const InventoryItem = require("../models/inventory_item.js");
 const { Op } = require("sequelize");
 const {getTransaction} = require("../api/empire");
 const {transactions} = require("./dashboard");
+const Config = require("../models/config.js");
 
 async function get(req, res) {
     const tokenData = req.token_data;
@@ -155,8 +156,54 @@ async function upsertItem(item, inventory) {
 
 async function checkItems(inventory) {
     _.each(inventory.dataValues.items, (item) => {
-        setPurchaseData(item, inventory.user_id)
+        setPurchaseData(item, inventory.user_id);
+        checkTradeLock(item, inventory.user_id);
     });
+}
+
+async function checkTradeLock(item, user_id) {
+    const now = moment();
+    const tradelock = moment(item.tradelock);
+
+    if (now.isAfter(tradelock)) {
+        await InventoryItem.update({
+                tradable: true,
+                tradelock: null
+            },
+            {
+                where: { entity_id: item.entity_id }
+            }
+        );
+        await depositItem(item, user_id);
+    }
+}
+
+async function depositItem(item, user_id) {
+    if (item.status !== 0) {
+        return null;
+    }
+    if (!item.purchase_value) {
+        return null;
+    }
+    let result = await Config.findOne({ where: { user_id: user_id, code: "auto_deposit_items" } });
+    if (!result || result.dataValues.value !== "true") {
+        return null;
+    }
+    const user = await User.findOne({ where: { entity_id: user_id}});
+    if (!user.empire_api_key) {
+        return null;
+    }
+    const price = (item.market_value > item.purchase_value)? item.market_value : item.purchase_value;
+    result = await Config.findOne({ where: { user_id: user_id, code: "profit_percent" } });
+    if (!result) {
+        return null;
+    }
+    const profit_percent = result.dataValues.value;
+    const deposit_value = Math.ceil((price*profit_percent/100)+price);
+    if (deposit_value < item.market_value || deposit_value < item.purchase_value) {
+        return null;
+    }
+    await empire.depositItem(item.empire_id, deposit_value, user.empire_api_key);
 }
 
 async function setPurchaseData(item, user_id) {
