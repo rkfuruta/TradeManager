@@ -252,12 +252,11 @@ async function itemSold(item, user_id) {
         let update = []
         _.each(result.data.data.deposits, async (deposit) => {
             if (item.asset_id === deposit.item.asset_id && deposit.status === 6) {
-                let transaction = await getTransactionByItemId(item.empire_id, user.empire_api_key);
-                let sell_date = Math.floor(transaction.timestamp_raw/1000) || moment.utc().unix();
+                let sell_date = moment.unix(deposit.metadata.expires_at).subtract(12, "hours");
                 update.push(InventoryItem.update(
                     {
                         sell_value: deposit.total_value,
-                        sell_date:moment.unix(sell_date).toISOString(),
+                        sell_date:sell_date.toISOString(),
                     },
                     {
                         where:
@@ -270,25 +269,6 @@ async function itemSold(item, user_id) {
         });
         await Promise.all(update);
     }
-}
-
-async function getTransactionByItemId(empire_id, token) {
-    let page = 1;
-    let total_pages = 1;
-    let transactionData = null;
-    while(page <= total_pages) {
-        let result = await empire.getTransaction(page, token);
-        total_pages = result.data.last_page;
-        _.each(result.data.data, (transaction) => {
-            if (transaction.data.status === 300 && transaction.data.metadata.item_id === empire_id) {
-                transactionData = transaction;
-            }
-        });
-        if (transactionData) {
-            total_pages = 0;
-        }
-    }
-    return transactionData;
 }
 
 module.exports = {
