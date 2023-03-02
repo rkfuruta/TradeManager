@@ -28,5 +28,10 @@ module.exports = db.define("user", {
     empire_api_key: {
         type: Sequelize.STRING,
         allowNull: true
+    },
+    steam_id: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        unique: true
     }
 })

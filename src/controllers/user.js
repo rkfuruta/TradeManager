@@ -1,6 +1,7 @@
 const user = require("../models/user.js");
+const JWT = require("../jwt.js");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+
 
 async function findAll(req, res) {
     const users = await user.findAll();
@@ -30,24 +31,12 @@ async function login(req, res) {
 
         if (model && (await bcrypt.compare(password, model.password))) {
 
-            const token = jwt.sign(
-                { user_id: model.entity_id, email: email },
-                process.env.TOKEN_KEY,
-                {
-                    expiresIn: "24h",
-                }
-            );
+            const token = JWT.generate(model.entity_id);
 
             model.token = token;
             model.save();
 
-            res.status(200).json({
-                id: model.id,
-                name: model.name,
-                email: model.email,
-                token: model.token,
-                created_at: model.created_at,
-            });
+            res.status(200).json(model);
         } else {
             res.status(401).json({ success: false, message: "Invalid Credentials"});
         }
@@ -77,9 +66,21 @@ async function empireKey(req, res) {
     }
 }
 
+async function get(req, res) {
+    const tokenData = req.token_data;
+    const userId = tokenData.user_id;
+    const model = await user.findOne({ where: { entity_id: userId } });
+    if (model) {
+        res.status(200).json(model);
+    } else {
+        res.status(401).json({ success: false, message: "Invalid Credentials"});
+    }
+}
+
 module.exports = {
     findAll,
     create,
     login,
-    empireKey
+    empireKey,
+    get
 };
