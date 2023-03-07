@@ -5,7 +5,6 @@ const empire = require("../api/empire.js");
 const _ = require("underscore");
 const InventoryItem = require("../models/inventory_item.js");
 const { Op } = require("sequelize");
-const {getTransaction} = require("../api/empire");
 const {transactions} = require("./dashboard");
 const Config = require("../models/config.js");
 
@@ -215,31 +214,36 @@ async function setPurchaseData(item, user_id) {
         throw new Error("Please inform your empire api key");
     }
     let result = await empire.getWithdrawals(user.empire_api_key);
-    let found = false;
-    await _.each(result.data.data.withdrawals, async (withdraw) => {
-        if (item.market_name === withdraw.item.market_name && withdraw.status === 6) {
-            let response = await InventoryItem.findOne({ where: { withdraw_id: withdraw.id } });
-            if (!response) {
-                found = true;
-                InventoryItem.update(
-                    {
-                        withdraw_id: withdraw.id,
-                        purchase_value: withdraw.total_value,
-                        purchase_date: moment.unix(withdraw.metadata.auction_ends_at).toISOString(),
-                        withdraw_check: false
-                    },
-                    {
-                        where: {
-                            entity_id: item.entity_id
-                        }
-                    }
-                );
+    const withdraw = await findWithdrawal(result.data.data.withdrawals, item);
+    if (withdraw) {
+        InventoryItem.update(
+            {
+                withdraw_id: withdraw.id,
+                purchase_value: withdraw.total_value,
+                purchase_date: moment.unix(withdraw.metadata.auction_ends_at).toISOString(),
+                withdraw_check: false
+            },
+            {
+                where: {
+                    entity_id: item.entity_id
+                }
             }
-        }
-    });
-    if (!found) {
+        );
+    } else {
         InventoryItem.update({ withdraw_check: false }, { where: { entity_id: item.entity_id } });
     }
+}
+
+async function findWithdrawal(withdraws, item) {
+    for (let i = 0; i < withdraws.length; i++) {
+        if (item.market_name === withdraws[i].item.market_name && withdraws[i].status === 6) {
+            let response = await InventoryItem.findOne({where: {withdraw_id: withdraws[i].id}});
+            if (!response) {
+                return withdraws[i];
+            }
+        }
+    }
+    return false;
 }
 
 async function itemSold(item, user_id) {
