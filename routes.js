@@ -6,6 +6,7 @@ const Item = require("./src/controllers/item.js");
 const Dashboard = require("./src/controllers/dashboard.js");
 const Config = require("./src/controllers/config.js");
 const Steam = require("./src/controllers/steam.js");
+const Bot = require("./src/controllers/bot.js");
 const auth = require("./src/middleware/auth.js");
 
 // USERS ENDPOINT
@@ -33,5 +34,8 @@ routes.delete("/v1/config",  auth, Config.remove);
 //STEAM LOGIN
 routes.get("/v1/steam/login", Steam.login);
 routes.get("/v1/steam/login/auth", Steam.auth);
+
+//BOT ENDPOINT
+routes.get("/v1/bot/log",  auth, Bot.all);
 
 module.exports = routes;
