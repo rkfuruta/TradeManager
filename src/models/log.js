@@ -21,6 +21,10 @@ const Log = db.define("log", {
         type: Sequelize.INTEGER.UNSIGNED,
         allowNull: false,
         defaultValue: 0
+    },
+    is_debug: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
     }
 });
 module.exports = Log;
