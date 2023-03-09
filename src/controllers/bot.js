@@ -16,8 +16,18 @@ async function all(req, res) {
         offset: --page*limit,
         limit: limit
     };
+    let filters = {}
     if (params.hasOwnProperty("code")) {
-        condition.where = { code: {[Op.in]: params.code.split(",") }}
+        filters.code = {[Op.in]: params.code.split(",") };
+    }
+    if (params.hasOwnProperty("id")) {
+        filters.entity_id = {[Op.gt]: params.id };
+    }
+    if (params.hasOwnProperty("debug")) {
+        filters.is_debug = { [Op.eq]: (params.debug !== "false") };
+    }
+    if (Object.keys(filters).length) {
+        condition.where = filters;
     }
     const { count, rows } = await Log.findAndCountAll(condition);
     return res.status(200).json(
