@@ -37,8 +37,7 @@ routes.get("/v1/steam/login/auth", Steam.auth);
 
 //BOT ENDPOINT
 routes.get("/v1/bot/log",  auth, Bot.all);
-routes.get("/v1/bot/config/changed", Bot.configChanged);
-routes.get("/v1/bot/config", Bot.config);
+routes.get("/v1/bot/config", auth, Bot.config);
 routes.post("/v1/bot/config",  auth, Bot.configUpdate);
 
 
