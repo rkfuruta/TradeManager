@@ -198,7 +198,15 @@ async function depositItem(item, user_id) {
         return null;
     }
     const profit_percent = result.dataValues.value;
-    const deposit_value = Math.ceil((price*profit_percent/100)+price);
+    let deposit_value = Math.ceil((price*profit_percent/100)+price);
+    result = await empire.getCheapestItem(item.market_name, user.empire_api_key);
+    if (result && result.data.data.length) {
+        let cheapestListing = result.data.data.shift();
+        let marketPrice = Math.floor(cheapestListing.market_value - (cheapestListing.market_value/100));
+        if (deposit_value < marketPrice) {
+            deposit_value = marketPrice;
+        }
+    }
     if (deposit_value < item.market_value || deposit_value < item.purchase_value) {
         return null;
     }

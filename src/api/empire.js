@@ -22,10 +22,15 @@ async function depositItem(itemId, price, apiKey) {
     return axios.post(`${endpoint}trading/deposit`, {items: [{id: itemId, coin_value: price}]},  { headers: {"Authorization" : `Bearer ${apiKey}`} });
 }
 
+async function getCheapestItem(marketName, apiKey) {
+    return axios.get(`${endpoint}trading/items?per_page=1&page=1&order=market_value&search=${encodeURI(marketName)}`,  { headers: {"Authorization" : `Bearer ${apiKey}`} });
+}
+
 module.exports = {
     getInventory,
     getTransaction,
     getWithdrawals,
     getDeposits,
-    depositItem
+    depositItem,
+    getCheapestItem
 }
