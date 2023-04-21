@@ -7,6 +7,7 @@ const Dashboard = require("./src/controllers/dashboard.js");
 const Config = require("./src/controllers/config.js");
 const Steam = require("./src/controllers/steam.js");
 const Bot = require("./src/controllers/bot.js");
+const Price = require("./src/controllers/price.js");
 const auth = require("./src/middleware/auth.js");
 
 // USERS ENDPOINT
@@ -40,5 +41,7 @@ routes.get("/v1/bot/log",  auth, Bot.all);
 routes.get("/v1/bot/config", auth, Bot.config);
 routes.post("/v1/bot/config",  auth, Bot.configUpdate);
 
+//PRICE ENDPOINT
+routes.get("/v1/price", Price.get);
 
 module.exports = routes;
