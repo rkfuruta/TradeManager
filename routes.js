@@ -9,6 +9,7 @@ const Steam = require("./src/controllers/steam.js");
 const Bot = require("./src/controllers/bot.js");
 const Price = require("./src/controllers/price.js");
 const auth = require("./src/middleware/auth.js");
+const fixed_auth = require("./src/middleware/fixed.js");
 
 // USERS ENDPOINT
 // routes.post("/v1/users",  User.create);
@@ -42,6 +43,6 @@ routes.get("/v1/bot/config", auth, Bot.config);
 routes.post("/v1/bot/config",  auth, Bot.configUpdate);
 
 //PRICE ENDPOINT
-routes.get("/v1/price", Price.get);
+routes.get("/v1/price", fixed_auth, Price.get);
 
 module.exports = routes;
