@@ -112,6 +112,9 @@ async function saveItems(data, inventory) {
                 inventory_id: inventory.entity_id,
                 asset_id: {
                     [Op.notIn]:assetIds
+                },
+                sell_date: {
+                    [Op.eq]: null
                 }
             }
         });
@@ -280,6 +283,19 @@ async function itemSold(item, user_id) {
             }
         });
         await Promise.all(update);
+        if (update.length === 0) {
+            await InventoryItem.update(
+                {
+                    sell_date: moment().toISOString()
+                },
+                {
+                    where:
+                        {
+                            entity_id: item.entity_id
+                        }
+                }
+            );
+        }
     }
 }
 
