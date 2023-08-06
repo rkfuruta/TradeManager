@@ -64,6 +64,7 @@ async function updateInventory(inventory) {
     if (!user.empire_api_key) {
         throw new Error("Please inform your empire api key");
     }
+    console.log("GET INVENTORY");
     const result = await empire.getInventory(user.empire_api_key).catch((err) => {
         if (err.hasOwnProperty("response") && err.response.hasOwnProperty("data") && err.response.data.hasOwnProperty("message")) {
             throw new Error(err.response.data.message);
@@ -202,6 +203,7 @@ async function depositItem(item, user_id) {
     }
     const profit_percent = result.dataValues.value;
     let deposit_value = Math.ceil((price*profit_percent/100)+price);
+    console.log("CHEAPEST ITEM");
     result = await empire.getCheapestItem(item.market_name, user.empire_api_key);
     if (result && result.data.data.length) {
         let cheapestListing = result.data.data.shift();
@@ -213,6 +215,7 @@ async function depositItem(item, user_id) {
     if (deposit_value < item.market_value || deposit_value < item.purchase_value) {
         return null;
     }
+    console.log("DEPOSIT ITEM");
     await empire.depositItem(item.empire_id, deposit_value, user.empire_api_key);
 }
 
@@ -224,6 +227,7 @@ async function setPurchaseData(item, user_id) {
     if (!user.empire_api_key) {
         throw new Error("Please inform your empire api key");
     }
+    console.log("GET WITHDRAWALS");
     let result = await empire.getWithdrawals(user.empire_api_key);
     const withdraw = await findWithdrawal(result.data.data.withdrawals, item);
     if (withdraw) {
@@ -262,6 +266,7 @@ async function itemSold(item, user_id) {
     if (!user.empire_api_key) {
         throw new Error("Please inform your empire api key");
     }
+    console.log("GET DEPOSITS");
     let result = await empire.getDeposits(user.empire_api_key);
     if (result.data.success) {
         let update = []
