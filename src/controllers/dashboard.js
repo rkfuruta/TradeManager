@@ -27,7 +27,7 @@ async function transactions(req, res) {
     return res.status(200).json({ success: true, data: {items}});
 }
 async function transactionDates(req, res) {
-    const [results, metadata] = await db.query("SELECT DISTINCT YEAR(purchase_date) AS Year, MONTH(purchase_date) AS Month FROM inventory_items WHERE purchase_date IS NOT NULL ORDER BY Year, Month DESC");
+    const [results, metadata] = await db.query("SELECT DISTINCT YEAR(purchase_date) AS Year, MONTH(purchase_date) AS Month FROM inventory_items WHERE purchase_date IS NOT NULL ORDER BY Year DESC, Month DESC LIMIT 12");
     return res.status(200).json({ success: true, data: {results}});
 }
 
