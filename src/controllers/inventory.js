@@ -148,6 +148,7 @@ async function upsertItem(item, inventory) {
     }
     if (!InvItem) {
         InvItem = await InventoryItem.create(intItemData);
+        await depositItem(item, inventory.user_id);
     } else {
         InvItem = await InventoryItem.update(intItemData, {
             where: {
