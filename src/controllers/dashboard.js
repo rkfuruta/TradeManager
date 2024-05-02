@@ -19,8 +19,7 @@ async function transactions(req, res) {
     let items = await InventoryItem.findAll({
         where: {
             inventory_id: inventory.entity_id,
-            createdAt: { [Op.between]: [start.toISOString(), end.toISOString()] },
-            purchase_date: { [Op.ne]: null }
+            purchase_date: { [Op.between]: [start.toISOString(), end.toISOString()] }
         },
         order: [ ["purchase_date", "DESC"] ]
     });
